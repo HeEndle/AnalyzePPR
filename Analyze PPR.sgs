@@ -1,0 +1,119 @@
+var Version$:="1.0"; 'Script Version
+var ch%:=1;
+var file%:=View();  'stores viewhandle of file
+var File$:=FileName$(0);
+
+'-------create protocol and set up workspace-----------------
+var protocol%:=FileNew(1,1);    'stores viewhandle of protocol file
+WindowTitle$("Protocol");       'set window title
+Window(0,0,15,100);             'display protocol on the left side of screen
+Print(Date$(2,2,3,2)+" "+Time$(1,3)+"\n"+"PPR analysis script protocol"+"\n"+"Script Version "+Version$+"\n");
+View(protocol%).Print("Analysis performed on: "+File$+"\n");
+Print("Frame"+"\t"+"ISI"+"\t"+"Slope 1"+"\t"+"Slope 2"+"\t"+"Amplitude 1"+"\t"+"Amplitude 2"+"\n");
+View(file%);                    'set view back to data file
+FrontView(file%);
+Window(15,0,100,97);           'display data file on the right side of the screen
+'------------------------------------------------------------
+
+CursorDelete(-1);
+DoToolbar();
+Halt;
+
+Func DoToolbar()
+ToolbarClear();
+ToolbarSet(1,"Quit", Quit%);
+ToolbarSet(2,"Measure", Measure%);
+ToolbarSet(3,"Fetch Cursors", Fetch%);
+ToolbarSet(4,"Auto fetch to 2nd response", AutoFetch2%);
+
+return Toolbar("PPR analysis script",511);
+
+end;
+
+Func Quit%()                'Button 1 to quit script
+return 0; ' Return zero to exit Toolbar()
+end;
+
+Func Measure%()
+var n%;
+var isi;
+var slope1;
+var slope2;
+var amp1;
+var amp2;
+
+isi:=Cursor(3)-Cursor(1);
+
+for n%:=5 to 8 do        
+    CursorNew(0,n%)
+next;
+
+CursorActive(5,19,ch%,"Cursor(2)","Cursor(1)","Cursor(1)",90);
+CursorActive(6,19,ch%,"Cursor(2)","Cursor(1)","Cursor(1)",10);
+CursorActive(7,19,ch%,"Cursor(4)","Cursor(3)","Cursor(3)",90);
+CursorActive(8,19,ch%,"Cursor(4)","Cursor(3)","Cursor(3)",10);
+
+slope1:=ChanMeasure(ch%,3,Cursor(5),Cursor(6));
+slope2:=ChanMeasure(ch%,3,Cursor(7),Cursor(8));
+
+amp1:=abs(ChanValue(ch%,Cursor(1))-ChanValue(ch%,Cursor(2)));
+amp2:=abs(ChanValue(ch%,Cursor(3))-ChanValue(ch%,Cursor(4)));
+
+View(protocol%).Print(Str$(View(file%).Frame())+"\t");
+View(protocol%).Print(Str$(isi)+"\t");
+View(protocol%).Print(Str$(slope1)+"\t");
+View(protocol%).Print(Str$(slope2)+"\t");
+View(protocol%).Print(Str$(amp1)+"\t");
+View(protocol%).Print(Str$(amp2)+"\n");
+
+for n%:=5 to 8 do        
+    CursorDelete(n%);
+next;
+
+return 1;
+end;
+
+Func Fetch%()
+var n%; 'counter
+
+If Cursor(1) = 0 then
+    for n%:=1 to 4 do
+        CursorNew(((XHigh() - Xlow())/2)+XLow(),n%);
+        if n% mod 2 <> 0 then
+            CursorLabel(4,n%,"Start Response "+Str$(n%))
+        else
+            CursorLabel(4,n%,"Peak Response "+Str$(n%))
+        endif;        
+    next;
+    CursorLabelPos(1,20);
+    CursorLabelPos(2,80);
+    CursorLabelPos(3,25);
+    CursorLabelPos(4,75);
+else
+    for n%:=1 to 4 do
+        Cursor(n%,((XHigh() - Xlow())/2)+XLow())
+    next;    
+endif;
+
+return 1;
+end;
+Func AutoFetch2%()  'automatically fetch cursurs to second EPSP
+var currentState%:=FrameState(-2);   'get current frame state
+var startTime:=0;                    'position of threshold crossing
+var crossingFound%:=0;               'flag if crossing has been found
+
+if currentState% mod 2 = 0 then
+    currentState%:=2;
+else
+    currentState%:=1;
+endif;
+
+while crossingFound% = 0 do
+    crossingFound%:=ChanSearch(ch%+currentState%,6,startTime,MaxTime(),4.5);    'search for crossing of threshold and set startTime to position of crossing return -1 if no crossing is found   
+wend;
+
+Cursor(3,startTime);
+Cursor(4,startTime);
+
+return 1;
+end;
