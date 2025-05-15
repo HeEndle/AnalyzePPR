@@ -1,4 +1,8 @@
-var Version$:="1.0"; 'Script Version
+'-------Changelog-------
+'1.1    added analyzed channel to protocol
+'1.0    initial release
+'-----------------------
+var Version$:="1.1"; 'Script Version
 var ch%:=1;
 var file%:=View();  'stores viewhandle of file
 var File$:=FileName$(0);
@@ -9,6 +13,7 @@ WindowTitle$("Protocol");       'set window title
 Window(0,0,15,100);             'display protocol on the left side of screen
 Print(Date$(2,2,3,2)+" "+Time$(1,3)+"\n"+"PPR analysis script protocol"+"\n"+"Script Version "+Version$+"\n");
 View(protocol%).Print("Analysis performed on: "+File$+"\n");
+View(protocol%).Print("Channel analyzed: "+Str$(ch%)+"\n");
 Print("Frame"+"\t"+"ISI"+"\t"+"Slope 1"+"\t"+"Slope 2"+"\t"+"Amplitude 1"+"\t"+"Amplitude 2"+"\n");
 View(file%);                    'set view back to data file
 FrontView(file%);
@@ -97,7 +102,7 @@ endif;
 
 return 1;
 end;
-Func AutoFetch2%()  'automatically fetch cursurs to second EPSP
+Func AutoFetch2%()  'automatically fetch cursors to second EPSP
 var currentState%:=FrameState(-2);   'get current frame state
 var startTime:=0;                    'position of threshold crossing
 var crossingFound%:=0;               'flag if crossing has been found
