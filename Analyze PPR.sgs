@@ -1,7 +1,7 @@
 'Analyze PPR
 'Script for the analysis of paired-pulse ratios (PPR) in evoked postsynaptic potentials (EPSPs)
 '-------Changelog-------
-'1.2    changed autofetch
+'1.2    changed autofetch, added warning if slope can't accurately be measured
 '1.1    added analyzed channel to protocol
 '1.0    initial release
 '-----------------------
@@ -60,6 +60,13 @@ CursorActive(5,19,ch%,"Cursor(2)","Cursor(1)","Cursor(1)",90);
 CursorActive(6,19,ch%,"Cursor(2)","Cursor(1)","Cursor(1)",10);
 CursorActive(7,19,ch%,"Cursor(4)","Cursor(3)","Cursor(3)",90);
 CursorActive(8,19,ch%,"Cursor(4)","Cursor(3)","Cursor(3)",10);
+
+for n%:=5 to 8 do
+    if CursorValid(n%) = 0 then
+        Message("Invalid position of cursor "+Str$(n%));
+        return 1;
+    endif;
+next;
 
 slope1:=ChanMeasure(ch%,3,Cursor(5),Cursor(6));
 slope2:=ChanMeasure(ch%,3,Cursor(7),Cursor(8));
