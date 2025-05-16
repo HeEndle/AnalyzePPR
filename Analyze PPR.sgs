@@ -1,9 +1,12 @@
+'Analyze PPR
+'Script for the analysis of paired-pulse ratios (PPR) in evoked postsynaptic potentials (EPSPs)
 '-------Changelog-------
+'1.2    changed autofetch
 '1.1    added analyzed channel to protocol
 '1.0    initial release
 '-----------------------
-var Version$:="1.1"; 'Script Version
-var ch%:=1;
+var Version$:="1.2"; 'Script Version
+var ch%:=1; 'channel to analyze
 var file%:=View();  'stores viewhandle of file
 var File$:=FileName$(0);
 
@@ -39,7 +42,7 @@ Func Quit%()                'Button 1 to quit script
 return 0; ' Return zero to exit Toolbar()
 end;
 
-Func Measure%()
+Func Measure%() 'measure EPSP 10-90% slopes and amplitudes
 var n%;
 var isi;
 var slope1;
@@ -78,7 +81,7 @@ next;
 return 1;
 end;
 
-Func Fetch%()
+Func Fetch%()   'fetch all cursors to middle, create them if they don't exist
 var n%; 'counter
 
 If Cursor(1) = 0 then
@@ -103,22 +106,20 @@ endif;
 return 1;
 end;
 Func AutoFetch2%()  'automatically fetch cursors to second EPSP
-var currentState%:=FrameState(-2);   'get current frame state
 var startTime:=0;                    'position of threshold crossing
 var crossingFound%:=0;               'flag if crossing has been found
 
-if currentState% mod 2 = 0 then
-    currentState%:=2;
-else
-    currentState%:=1;
+'find first artifact
+crossingFound%:=ChanSearch(ch%,6,startTime,MaxTime(),4.5);    'search for crossing of threshold and set startTime to position of crossing return -1 if no crossing is found   
+
+if crossingFound% >= 0 then
+    startTime:= startTime+0.01;
+    crossingFound%:=ChanSearch(ch%,2,startTime,MaxTime(),4.5); 'find second artifact
+    if crossingFound% >= 0 then
+        Cursor(3,startTime);
+        Cursor(4,startTime);
+    endif;
 endif;
-
-while crossingFound% = 0 do
-    crossingFound%:=ChanSearch(ch%+currentState%,6,startTime,MaxTime(),4.5);    'search for crossing of threshold and set startTime to position of crossing return -1 if no crossing is found   
-wend;
-
-Cursor(3,startTime);
-Cursor(4,startTime);
 
 return 1;
 end;
